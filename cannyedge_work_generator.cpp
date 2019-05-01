@@ -120,14 +120,21 @@ void main_loop() {
             exit(retval);
         }
         if (n) {
+            log_messages.printf(MSG_NORMAL,"waiting for current file to finish.\n");
             daemon_sleep(10);
         }else {
             struct dirent *ent;
             if((dir = opendir(source_dir)) != NULL) {
-                while((ent = readdir(dir)) != NULL) {
-                    Bitmap* bm = bm_load(ent->d_name);
+                ent = readdir(dir);
+                if(!ent) {
+                    log_messages.printf(MSG_NORMAL,"no files found to process.\n");
+                    daemon_sleep(10);
+                }else {
+                    log_messages.printf(MSG_NORMAL, "processing file: %s/%s\n",source_dir,ent->d_name);
+                    char bmpfile[1024];
+                    snprintf(bmpfile,sizeof(bmpfile),"%s/%s",source_dir,ent->d_name);
+                    Bitmap* bm = bm_load(bmpfile);
                     if(bm) {
-                        log_messages.printf(MSG_NORMAL, "processing file: %s%s\n",source_dir,ent->d_name);
                         if(bm->w > bm->h) {
                             //split vertically
                             char filepartname[1024];
@@ -156,7 +163,9 @@ void main_loop() {
                                 bm_free(bmpart);
                             }
                         }
-                        break;
+                    }else {
+                        log_messages.printf(MSG_CRITICAL,"could not open file: %s as a bmp image\n",bmpfile);
+                        daemon_sleep(5);
                     }
                 }
                 closedir(dir);
