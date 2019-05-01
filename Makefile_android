@@ -1,0 +1,29 @@
+# This should work on Linux.  Modify as needed for other platforms.
+
+CXXFLAGS += -g \
+	-Wall -W -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings -fno-common \
+    -I$(BOINC_DIR) \
+    -I$(BOINC_LIB_DIR) \
+    -I$(BOINC_API_DIR) \
+    -L.
+
+PROGS = cannyedge_app
+
+all: $(PROGS)
+
+clean: distclean
+
+distclean:
+	/bin/rm -f $(PROGS) *.o contrib/*.o
+
+install: cannyedge_app
+
+cannyedge_app: cannyedge_app.o libcontrib.a $(BOINC_API_DIR)/libboinc_api.a $(BOINC_LIB_DIR)/libboinc.a
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) -o cannyedge_app cannyedge_app.o -lcontrib $(STDCPPTC) \
+	$(BOINC_API_DIR)/libboinc_api.a \
+	$(BOINC_LIB_DIR)/libboinc.a
+
+libcontrib.a: contrib/bmp.o contrib/CannyEdgeDetector.o
+	ar rcs libcontrib.a contrib/bmp.o contrib/CannyEdgeDetector.o
+
+libs: libcontrib.a

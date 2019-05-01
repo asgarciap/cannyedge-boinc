@@ -29,21 +29,21 @@ CannyEdgeDetector::~CannyEdgeDetector()
 	delete[] workspace_bitmap;
 }
 
-uint8_t* CannyEdgeDetector::ProcessImage(uint8_t* source_bitmap, unsigned int width,
-                                         unsigned int height, float sigma,
+uint8_t* CannyEdgeDetector::ProcessImage(uint8_t* source_bitmap_b, unsigned int width_b,
+                                         unsigned int height_b, float sigma,
                                          uint8_t lowThreshold, uint8_t highThreshold)
 {
 	/*
 	 * Setting up image width and height in pixels.
 	 */
-	this->width = width;
-	this->height = height;
+	this->width = width_b;
+	this->height = height_b;
 
 	/*
 	 * We store image in array of bytes (chars) in BGR(BGRBGRBGR...) order.
 	 * Size of the table is width * height * 3 bytes.
 	 */
-	this->source_bitmap = source_bitmap;
+	this->source_bitmap = source_bitmap_b;
 
 	/*
 	 * Conversion to grayscale. Only luminance information remains.
@@ -84,15 +84,15 @@ uint8_t* CannyEdgeDetector::ProcessImage(uint8_t* source_bitmap, unsigned int wi
 	return source_bitmap;
 }
 
-inline uint8_t CannyEdgeDetector::GetPixelValue(unsigned int x, unsigned int y)
+inline uint8_t CannyEdgeDetector::GetPixelValue(unsigned int xx, unsigned int yy)
 {
-	return (uint8_t) *(workspace_bitmap + (unsigned long) (x * width + y));
+	return (uint8_t) *(workspace_bitmap + (unsigned long) (xx * width + yy));
 }
 
-inline void CannyEdgeDetector::SetPixelValue(unsigned int x, unsigned int y,
+inline void CannyEdgeDetector::SetPixelValue(unsigned int xx, unsigned int yy,
                                              uint8_t value)
 {
-	workspace_bitmap[(unsigned long) (x * width + y)] = value;
+	workspace_bitmap[(unsigned long) (xx * width + yy)] = value;
 }
 
 void CannyEdgeDetector::PreProcessImage(float sigma)
@@ -461,14 +461,14 @@ void CannyEdgeDetector::Hysteresis(uint8_t lowThreshold, uint8_t highThreshold)
 	}
 }
 
-void CannyEdgeDetector::HysteresisRecursion(long x, long y, uint8_t lowThreshold)
+void CannyEdgeDetector::HysteresisRecursion(long xx, long yy, uint8_t lowThreshold)
 {
 	uint8_t value = 0;
 
-	for (long x1 = x - 1; x1 <= x + 1; x1++) {
-		for (long y1 = y - 1; y1 <= y + 1; y1++) {
+	for (long x1 = xx - 1; x1 <= xx + 1; x1++) {
+		for (long y1 = yy - 1; y1 <= yy + 1; y1++) {
 			if ((x1 < height) & (y1 < width) & (x1 >= 0) & (y1 >= 0)
-			    & (x1 != x) & (y1 != y)) {
+			    & (x1 != xx) & (y1 != yy)) {
 
 				value = GetPixelValue(x1, y1);
 				if (value != 255) {
