@@ -20,6 +20,7 @@
 #include <string>
 #include <cstring>
 #include <dirent.h>
+#include <math.h>
 
 #include "backend_lib.h"
 #include "boinc_db.h"
@@ -47,6 +48,7 @@ const char* app_name = "cannyedge_app";
 const char* in_template_file = "cannyedge_app_in";
 const char* out_template_file = "cannyedge_app_out";
 const char* source_dir = "source_dir";
+const char* dest_dir = "dest_dir";
 
 char* in_template;
 DB_APP app;
@@ -126,7 +128,7 @@ void main_loop() {
             struct dirent *ent;
             if((dir = opendir(source_dir)) != NULL) {
                 ent = readdir(dir);
-                if(!ent) {
+                if(!ent || (strcmp(ent->d_name,".") == 0) || (strcmp(ent->d_name,"..") == 0) ) {
                     log_messages.printf(MSG_NORMAL,"no files found to process.\n");
                     daemon_sleep(10);
                 }else {
@@ -135,38 +137,48 @@ void main_loop() {
                     snprintf(bmpfile,sizeof(bmpfile),"%s/%s",source_dir,ent->d_name);
                     Bitmap* bm = bm_load(bmpfile);
                     if(bm) {
+                        log_messages.printf(MSG_NORMAL, "bmp size. h: %d w: %d\n",bm->h,bm->w);
+                        long fsize = bm->h*bm->w*4;
                         if(bm->w > bm->h) {
                             //split vertically
                             char filepartname[1024];
-                            int wsize = bm->w/JOB_BMP_SIZE-(bm->h*4);
-                            if(wsize < 0) wsize = JOB_BMP_SIZE/500;
+                            int wsize = JOB_BMP_SIZE;
+                            if(fsize > JOB_BMP_SIZE) 
+                                wsize = ceil(bm->w/ceil(fsize/JOB_BMP_SIZE));
                             int k=0;
-                            for(int i=0;i<bm->w;i+=wsize) {
-                                Bitmap* bmpart = bm_crop(bm,i,0,bm->w+i,bm->h);
-                                snprintf(filepartname,sizeof(filepartname),"%s/%d_%s",source_dir,k,ent->d_name);
+                            for(int i=0;i<bm->w;) {
+                                Bitmap* bmpart = bm_crop(bm,i,0,wsize,bm->h);
+                                snprintf(filepartname,sizeof(filepartname),"%s/%d_%s",dest_dir,k,ent->d_name);
                                 bm_save(bmpart,filepartname);
-                                log_messages.printf(MSG_NORMAL, "creating work for file: %s%s\n",source_dir,filepartname);
+                                log_messages.printf(MSG_NORMAL, "creating work for file: %s - h: %d w:%d (%d,0)\n",filepartname,bmpart->h,bmpart->w,i);
+                                i+=bmpart->w;                            
                                 bm_free(bmpart);
+                                k++;                        
                             }
                         }else {
                             //split horizontally
-                            //split vertically
                             char filepartname[1024];
-                            int hsize = bm->h/JOB_BMP_SIZE-(bm->w*4);
-                            if(hsize < 0) hsize = JOB_BMP_SIZE/500;
+                            int hsize = JOB_BMP_SIZE;
+                            if(fsize > JOB_BMP_SIZE)
+                                hsize = ceil(bm->h/ceil(fsize/JOB_BMP_SIZE));
                             int k=0;
-                            for(int i=0;i<bm->h;i+=hsize) {
-                                Bitmap* bmpart = bm_crop(bm,0,i,bm->w,bm->h+i);
-                                snprintf(filepartname,sizeof(filepartname),"%s/%d_%s",source_dir,k,ent->d_name);
+                            for(int i=0;i<bm->h;) {
+                                Bitmap* bmpart = bm_crop(bm,0,i,bm->w,hsize);
+                                snprintf(filepartname,sizeof(filepartname),"%s/%d_%s",dest_dir,k,ent->d_name);
                                 bm_save(bmpart,filepartname);
-                                log_messages.printf(MSG_NORMAL, "creating work for file: %s%s\n",source_dir,filepartname);
+                                log_messages.printf(MSG_NORMAL, "creating work for file: %s - h: %d w: %d\n",filepartname,bmpart->h,bmpart->w);
+                                i+=bmpart->h;
                                 bm_free(bmpart);
+                                k++;
                             }
                         }
                     }else {
-                        log_messages.printf(MSG_CRITICAL,"could not open file: %s as a bmp image\n",bmpfile);
+                        log_messages.printf(MSG_CRITICAL,"could not open file: %s as a bmp image. %s\n",bmpfile,bm_last_error);
                         daemon_sleep(5);
-                    }
+                    }                    
+                    char bmpfmoved[1024];
+                    snprintf(bmpfmoved,sizeof(bmpfmoved),"%s/%s",dest_dir,ent->d_name);
+                    rename(bmpfile,bmpfmoved);
                 }
                 closedir(dir);
             }else {
@@ -217,6 +229,8 @@ int main(int argc, char** argv) {
             if (dl == 4) g_print_queries = true;
         } else if (!strcmp(argv[i], "--source_dir")) {
             source_dir = argv[++i];            
+        } else if (!strcmp(argv[i], "--dest_dir")) {
+            dest_dir = argv[++i];            
         } else if (!strcmp(argv[i], "--app")) {
             app_name = argv[++i];
         } else if (!strcmp(argv[i], "--in_template_file")) {
