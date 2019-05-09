@@ -17,7 +17,7 @@ CXXFLAGS += -g \
     -I/usr/include/mysql \
     -L.
 
-PROGS = cannyedge_app cannyedge_work_generator
+PROGS = cannyedge_app cannyedge_work_generator cannyedge_assimilator
 
 all: $(PROGS)
 
@@ -39,6 +39,10 @@ cannyedge_app: cannyedge_app.o libcontrib.a libstdc++.a $(BOINC_API_DIR)/libboin
 cannyedge_work_generator: cannyedge_work_generator.o libcontrib.a libstdc++.a $(BOINC_LIB_DIR)/libboinc.a $(BOINC_LIB_DIR)/libboinc_crypt.a $(BOINC_SCHED_DIR)/libsched.a
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) -o cannyedge_work_generator cannyedge_work_generator.o $(BOINC_SCHED_DIR)/libsched.a $(BOINC_LIB_DIR)/libboinc.a \
 	$(BOINC_LIB_DIR)/libboinc_crypt.a -lcontrib -lpthread -lmariadbclient -lcrypto -lssl
+
+cannyedge_assimilator: $(BOINC_SCHED_DIR)/assimilator.o cannyedge_assimilator.o $(BOINC_SCHED_DIR)/validate_util.o libstdc++.a $(BOINC_LIB_DIR)/libboinc.a $(BOINC_LIB_DIR)/libboinc_crypt.a $(BOINC_SCHED_DIR)/libsched.a
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) -o cannyedge_assimilator $(BOINC_SCHED_DIR)/assimilator.o cannyedge_assimilator.o $(BOINC_SCHED_DIR)/validate_util.o $(BOINC_SCHED_DIR)/libsched.a $(BOINC_LIB_DIR)/libboinc.a \
+	$(BOINC_LIB_DIR)/libboinc_crypt.a -lpthread -lmariadbclient -lcrypto -lssl
 
 libcontrib.a: contrib/bmp.o contrib/CannyEdgeDetector.o
 	ar rcs libcontrib.a contrib/bmp.o contrib/CannyEdgeDetector.o

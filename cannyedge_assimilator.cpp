@@ -34,7 +34,8 @@
 using std::vector;
 using std::string;
 
-const char* outdir = "sample_results";
+const char* outdir = "cannyedge_results";
+bool delete_files = false;
 
 int write_error(char* p) {
     static FILE* f = 0;
@@ -53,7 +54,9 @@ int assimilate_handler_init(int argc, char** argv) {
     for (int i=1; i<argc; i++) {
         if (!strcmp(argv[i], "--outdir")) {
             outdir = argv[++i];
-        } else {
+        } else if(!strcmp(argv[i], "--delete_files")) {
+            delete_files = true;
+        }else {
             fprintf(stderr, "bad arg %s\n", argv[i]);
         }
     }
@@ -65,6 +68,7 @@ void assimilate_handler_usage() {
     fprintf(stderr,
         "    Custom options:\n"
         "    [--outdir X]  output dir for result files\n"
+        "    [--delete_files]  delete output files received in the result\n"
     );
 }
 
@@ -92,7 +96,10 @@ int assimilate_handler(
                 sprintf(buf, "%s/%s_%d", outdir, wu.name, i);
             }
             copy_path = config.project_path(buf);
-            retval = boinc_copy(fi.path.c_str() , copy_path);
+            if(delete_files)
+                retval = boinc_delete_file(fi.path.c_str());
+            else
+                retval = boinc_copy(fi.path.c_str() , copy_path);
             if (!retval) {
                 file_copied = true;
             }
