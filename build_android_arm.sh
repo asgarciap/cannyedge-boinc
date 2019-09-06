@@ -25,4 +25,6 @@ export GDB_CFLAGS="--sysroot=$TCSYSROOT -Wall -g -I$TCINCLUDES/include"
 # Prepare android toolchain and environment
 # $BOINC_DIR/android/build_androidtc_arm.sh
 
+make clean
 make cannyedge_app -f Makefile_android
+make cannyedge_app2 -f Makefile_android
