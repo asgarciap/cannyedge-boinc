@@ -8,7 +8,7 @@
 
 //do 5 extra minutes of cpu computing to set 
 //the total computing job time bigger
-#define CPU_TIME 300
+#define CPU_TIME 600
 
 // do about .5 seconds of computing
 // (note: I needed to add an arg to this;
@@ -81,15 +81,13 @@ int main(int argc, char **argv)
     bm_free(bm2);
 
     //burn up some CPU time
-    if(CPU_TIME) {
-        double start = dtime();
-        for(int i=0; ; i++) {
-            double e = dtime() - start;
-            if (e > CPU_TIME) break;
-            double fd = .5 + .5*(e/CPU_TIME);
-            boinc_fraction_done(fd);
-            double comp_result = do_some_computing(i);
-        }
+    double start = dtime();
+    for(int i=0; ; i++) {
+        double e = dtime() - start;
+        if (e > CPU_TIME) break;
+        double fd = .5 + .5*(e/CPU_TIME);
+        boinc_fraction_done(fd);
+        double comp_result = do_some_computing(i);
     }
     boinc_fraction_done(1);
     boinc_finish(0);
