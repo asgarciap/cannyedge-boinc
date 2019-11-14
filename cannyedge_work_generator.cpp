@@ -40,10 +40,12 @@
 
 #define REPLICATION_FACTOR  1
     // number of instances of each job
-#define DELAY_BOUND 900
-    // max time to wait for a job to finish (900 = 15 minutes)
+#define DELAY_BOUND 1800
+    // max time to wait for a job to finish (1800 = 30 minutes)
 #define JOB_BMP_SIZE 9000000
     //estimate bmp size to generate per job (5MB)
+#define MAX_JOBS_NUM 50
+    //max number of jobs to generate
 const char* app_name = "cannyedge_app";
 const char* in_template_file = "cannyedge_app_in";
 const char* out_template_file = "cannyedge_app_out";
@@ -84,7 +86,7 @@ int make_job(const char* name) {
     wu.max_error_results = REPLICATION_FACTOR*4;
     wu.max_total_results = REPLICATION_FACTOR*8;
     wu.max_success_results = REPLICATION_FACTOR*4;
-    wu.app_version_num = 200;
+    wu.app_version_num = 201;
     infiles[0] = name;
 
     // Register the job with BOINC
@@ -132,6 +134,7 @@ void main_loop() {
                     if(bm) {
                         log_messages.printf(MSG_NORMAL, "bmp size. h: %d w: %d\n",bm->h,bm->w);
                         long fsize = bm->h*bm->w*4;
+                        int numjobs = 0;
                         if(bm->w > bm->h) {
                             //split vertically
                             char filepartname[1024];
@@ -146,6 +149,8 @@ void main_loop() {
                                 make_job(filepartname);
                                 i+=bmpart->w;                            
                                 bm_free(bmpart);
+                                numjobs++;
+                                if(numjobs >= MAX_JOBS_NUM) break;
                             }
                         }else {
                             //split horizontally
@@ -161,6 +166,8 @@ void main_loop() {
                                 make_job(filepartname);
                                 i+=bmpart->h;
                                 bm_free(bmpart);
+                                numjobs++;
+                                if(numjobs >= MAX_JOBS_NUM) break;
                             }
                         }
                         bm_free(bm);
