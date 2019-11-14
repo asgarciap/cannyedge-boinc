@@ -4,7 +4,7 @@ The work generator split a large BMP file into different pieces than are then se
   
 Then work assimilator just deletes the final images to save space in the server.
 
-The cannyedge_app performs an edge detection in the source image and also do some fake computation for a few minutes.
+The cannyedge_app performs an edge detection in the source image, the cannyedge_app2 do the same but also performs some fake computation for a few minutes.
 
 Builds files are provided to crosscompile the application for ARM and ARM64 archs.
   
